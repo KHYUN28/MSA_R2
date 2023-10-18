@@ -1,11 +1,16 @@
 spring:
-    application:
-     name: licensing-service 
-    profiles:
-      active: dev
-    cloud:
-        config: 
-            uri: http://configserver:8071
+  application:
+    name: licensing-service
+  profiles:
+    active: dev
+  config:
+    import: "optional:configserver:http://configserver:8071"
+  cloud:
+    config:
+      # config server 에서 활성화 시킬 환경 변수 파일
+      name: licensing-service #, licensing-service-dev
+  main:
+    allow-bean-definition-overriding: true
 
 logging:
   level:
@@ -13,39 +18,20 @@ logging:
     org.springframework.web: WARN
     com.optimagrowth: DEBUG
 
-#auditevents  , Exposes audit events information for the current application.
-#beans  , Displays a complete list of all the Spring beans in your application.
-#caches , Exposes available caches.
-#conditions , Shows the conditions that were evaluated on configuration and auto-configuration classes and the reasons why they did or did not match.
-#configprops  , Displays a collated list of all\u00A0@ConfigurationProperties.
-#env  , Exposes properties from Spring\u2019s\u00A0ConfigurableEnvironment.
-#flyway , Shows any Flyway database migrations that have been applied.
-#health , Shows application health information.
-#httptrace  , Displays HTTP trace information (by default, the last 100 HTTP request-response exchanges).
-#info , Displays arbitrary application info.
-#integrationgraph , Shows the Spring Integration graph.
-#loggers  , Shows and modifies the configuration of loggers in the application.
-#liquibase  , Shows any Liquibase database migrations that have been applied.
-#metrics  , Shows \u2018metrics\u2019 information for the current application.
-#mappings , Displays a collated list of all\u00A0@RequestMapping\u00A0paths.
-#scheduledtasks , Displays the scheduled tasks in your application.
-#sessions , Allows retrieval and deletion of user sessions from a Spring Session-backed session store. Not available when using Spring Session\u2019s support for reactive web applications.
-#shutdown , Lets the application be gracefully shutdown.
-#threaddump , Performs a thread dump.
-
-#management.endpoints.web.base-path=/
 management.endpoints.enabled-by-default: false
 management.endpoint.health:
- enabled: true
- show-details: always
+  enabled: true
+  show-details: always
 
 
 resilience4j.circuitbreaker:
   instances:
     licenseService:
       registerHealthIndicator: true
-      ringBufferSizeInClosedState: 5
-      ringBufferSizeInHalfOpenState: 3
+      # ringBufferSizeInClosedState: 5 => Deprecated
+      sliding-window-size: 5 # 닫힌 상태에서의 호출 수로, 서킷을 열어 할지 결정할 때 사용한다.
+      # ringBufferSizeInHalfOpenState: 3 => Deprecated
+      permittedNumberOfCallsInHalfOpenState: 3 # 반열림 상태에서의 호출 수로, 서킷을 다시 열거나 닫힘 상태로 돌아갈지를 결정할 때 사용 한다.
       waitDurationInOpenState: 10s
       failureRateThreshold: 50
       recordExceptions:
@@ -55,8 +41,8 @@ resilience4j.circuitbreaker:
         - org.springframework.web.client.ResourceAccessException
     organizationService:
       registerHealthIndicator: true
-      ringBufferSizeInClosedState: 6
-      ringBufferSizeInHalfOpenState: 4
+      sliding-window-size: 6
+      permittedNumberOfCallsInHalfOpenState: 4
       waitDurationInOpenState: 20s
       failureRateThreshold: 60
 
@@ -70,7 +56,8 @@ resilience4j.ratelimiter:
 resilience4j.retry:
   instances:
     retryLicenseService:
-      maxRetryAttempts: 5
+      # maxRetryAttempts: 5 => Deprecated
+      max-attempts: 5 # 첫번째 호출을 포함한 총 재시도 횟수
       waitDuration: 10000
       retry-exceptions:
         - java.util.concurrent.TimeoutException
@@ -88,3 +75,75 @@ resilience4j.thread-pool-bulkhead:
       maxThreadPoolSize: 1
       coreThreadPoolSize: 1
       queueCapacity: 1
+
+#spring:
+#    application:
+#     name: licensing-service
+#    profiles:
+#      active: dev
+#    cloud:
+#        config:
+#            uri: http://configserver:8071
+#    main:
+#      allow-bean-definition-overriding: true
+#
+#logging:
+#  level:
+#    com.netflix: WARN
+#    org.springframework.web: WARN
+#    com.optimagrowth: DEBUG
+#
+#management.endpoints.enabled-by-default: false
+#management.endpoint.health:
+# enabled: true
+# show-details: always
+#
+#
+#resilience4j.circuitbreaker:
+#  instances:
+#    licenseService:
+#      registerHealthIndicator: true
+#      ringBufferSizeInClosedState: 5
+#      ringBufferSizeInHalfOpenState: 3
+#      waitDurationInOpenState: 10s
+#      failureRateThreshold: 50
+#      recordExceptions:
+#        - org.springframework.web.client.HttpServerErrorException
+#        - java.io.IOException
+#        - java.util.concurrent.TimeoutException
+#        - org.springframework.web.client.ResourceAccessException
+#    organizationService:
+#      registerHealthIndicator: true
+#      ringBufferSizeInClosedState: 6
+#      ringBufferSizeInHalfOpenState: 4
+#      waitDurationInOpenState: 20s
+#      failureRateThreshold: 60
+#
+#resilience4j.ratelimiter:
+#  instances:
+#    licenseService:
+#      limitForPeriod: 5
+#      limitRefreshPeriod: 5000
+#      timeoutDuration: 1000ms
+#
+#resilience4j.retry:
+#  instances:
+#    retryLicenseService:
+#      maxRetryAttempts: 5
+#      waitDuration: 10000
+#      retry-exceptions:
+#        - java.util.concurrent.TimeoutException
+#
+#resilience4j.bulkhead:
+#  instances:
+#    bulkheadLicenseService:
+#      maxWaitDuration: 2ms
+#      maxConcurrentCalls: 20
+#
+#
+#resilience4j.thread-pool-bulkhead:
+#  instances:
+#    bulkheadLicenseService:
+#      maxThreadPoolSize: 1
+#      coreThreadPoolSize: 1
+#      queueCapacity: 1

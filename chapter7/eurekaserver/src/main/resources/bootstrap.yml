@@ -6,4 +6,4 @@ spring:
             uri: http://configserver:8071
         loadbalancer:
             ribbon:
-              enabled: false
+               enabled: false
