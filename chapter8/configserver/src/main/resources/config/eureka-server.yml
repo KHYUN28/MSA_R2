@@ -22,5 +22,9 @@ management:
   endpoints:
     web:
       exposure:
-        include: "*"
-   
+        include:
+          - "*"
+          - "gateway"
+  endpoint:
+    gateway:
+      enabled: true

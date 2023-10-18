@@ -2,17 +2,26 @@ spring:
   application:
     name: config-server
   profiles:
-    active:
-    - native
+    active: native
   cloud:
     config:
       server:
         native:
           search-locations: classpath:/config
-        #git:
-         #   uri: https://github.com/ihuaylupo/config.git
-         #   searchPaths: licensingservice
-    
+        git:
+          uri: https://github.com/ihuaylupo/config.git
+          searchPaths: licensingservice
+          default-label: master
+        vault:
+          authentication: TOKEN
+          token: myroot  # Docker에서 Vault를 실행할 때 지정한 root 토큰
+          port: 8200
+          host: ${VAULT_HOST} # 도커일 때와 아닐 때 호스트 주소가 달라진다 -> host.docker.internal
+          scheme: http
+          kvVersion: 2
+          profile-separator: /
+#          backend: licensing-service
+
 server:
   port: 8071
   
