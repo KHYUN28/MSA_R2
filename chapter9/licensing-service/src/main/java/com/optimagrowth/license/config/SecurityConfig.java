@@ -18,6 +18,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.authority.mapping.SimpleAuthorityMapper;
 import org.springframework.security.core.session.SessionRegistryImpl;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 
@@ -29,23 +30,22 @@ public class SecurityConfig {
 	@Autowired
 	public KeycloakClientRequestFactory keycloakClientRequestFactory;
 
-	@Override
-	protected void configure(HttpSecurity http) throws Exception {
-		super.configure(http);
+	@Bean
+	protected SecurityFilterChain configure(HttpSecurity http) throws Exception {
+		configure(http);
 		http.authorizeRequests()
 		.anyRequest().authenticated();
-		http.csrf().disable();
+		return http.build();
 	}
 
 	@Autowired
 	public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-		KeycloakAuthenticationProvider keycloakAuthenticationProvider = keycloakAuthenticationProvider();
+		KeycloakAuthenticationProvider keycloakAuthenticationProvider = new KeycloakAuthenticationProvider();
 		keycloakAuthenticationProvider.setGrantedAuthoritiesMapper(new SimpleAuthorityMapper());
 		auth.authenticationProvider(keycloakAuthenticationProvider);
 	}
 
 	@Bean
-	@Override
 	protected SessionAuthenticationStrategy sessionAuthenticationStrategy() {
 		return new RegisterSessionAuthenticationStrategy(new SessionRegistryImpl());
 	}
